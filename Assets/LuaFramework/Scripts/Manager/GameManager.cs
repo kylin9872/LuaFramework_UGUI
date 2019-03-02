@@ -219,22 +219,18 @@ namespace LuaFramework {
         /// 资源初始化结束
         /// </summary>
         public void OnResourceInited() {
-            StartCoroutine(Initialize());
-        }
-
-        IEnumerator Initialize() {
 #if ASYNC_MODE
-            // Initialize AssetBundleManifest which loads the AssetBundleManifest object.
-            ResourceManager.BaseDownloadingURL = Util.GetRelativePath();
-            var request = ResourceManager.Initialize(AppConst.AssetDir);
-            if (request != null) {
-                yield return StartCoroutine(request);
-            }
+            ResManager.Initialize(AppConst.AssetDir, delegate() {
+                Debug.Log("Initialize OK!!!");
+                this.OnInitialize();
+            });
 #else
             ResManager.Initialize();
-            yield return 0;
+            this.OnInitialize();
 #endif
-            //---------------------------------------------------------
+        }
+
+        void OnInitialize() {
             LuaManager.InitStart();
             LuaManager.DoFile("Logic/Game");         //加载游戏
             LuaManager.DoFile("Logic/Network");      //加载网络
@@ -242,6 +238,49 @@ namespace LuaFramework {
             Util.CallMethod("Game", "OnInitOK");     //初始化完成
 
             initialize = true;
+
+            //类对象池测试
+            var classObjPool = ObjPoolManager.CreatePool<TestObjectClass>(OnPoolGetElement, OnPoolPushElement);
+            //方法1
+            //objPool.Release(new TestObjectClass("abcd", 100, 200f));
+            //var testObj1 = objPool.Get();
+
+            //方法2
+            ObjPoolManager.Release<TestObjectClass>(new TestObjectClass("abcd", 100, 200f));
+            var testObj1 = ObjPoolManager.Get<TestObjectClass>();
+
+            Debugger.Log("TestObjectClass--->>>" + testObj1.ToString());
+
+            //游戏对象池测试
+            var prefab = Resources.Load("TestGameObjectPrefab", typeof(GameObject)) as GameObject;
+            var gameObjPool = ObjPoolManager.CreatePool("TestGameObject", 5, 10, prefab);
+
+            var gameObj = Instantiate(prefab) as GameObject;
+            gameObj.name = "TestGameObject_01";
+            gameObj.transform.localScale = Vector3.one;
+            gameObj.transform.localPosition = Vector3.zero;
+
+            ObjPoolManager.Release("TestGameObject", gameObj);
+            var backObj = ObjPoolManager.Get("TestGameObject");
+            backObj.transform.SetParent(null);
+
+            Debug.Log("TestGameObject--->>>" + backObj);
+        }
+
+        /// <summary>
+        /// 当从池子里面获取时
+        /// </summary>
+        /// <param name="obj"></param>
+        void OnPoolGetElement(TestObjectClass obj) {
+            Debug.Log("OnPoolGetElement--->>>" + obj);
+        }
+
+        /// <summary>
+        /// 当放回池子里面时
+        /// </summary>
+        /// <param name="obj"></param>
+        void OnPoolPushElement(TestObjectClass obj) {
+            Debug.Log("OnPoolPushElement--->>>" + obj);
         }
 
         /// <summary>

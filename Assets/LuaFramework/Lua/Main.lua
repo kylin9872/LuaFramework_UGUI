@@ -1,22 +1,13 @@
 --主入口函数。从这里开始lua逻辑
 function Main()					
-	 		
-end
-	
---逻辑update
-function Update(deltaTime, unscaledDeltaTime)
-	Time:SetDeltaTime(deltaTime, unscaledDeltaTime)				
-	UpdateBeat()			
+	print("logic start")	 		
 end
 
-function LateUpdate()	
-	LateUpdateBeat()	
-	CoUpdateBeat()	
-	Time:SetFrameCount()		
+--场景切换通知
+function OnLevelWasLoaded(level)
+	collectgarbage("collect")
+	Time.timeSinceLevelLoad = 0
 end
 
---物理update
-function FixedUpdate(fixedDeltaTime)
-	Time:SetFixedDelta(fixedDeltaTime)
-	FixedUpdateBeat()
+function OnApplicationQuit()
 end

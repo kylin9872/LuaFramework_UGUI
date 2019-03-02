@@ -75,9 +75,7 @@ public class Packager {
             HandleExampleBundle();
         }
         string resPath = "Assets/" + AppConst.AssetDir;
-        BuildAssetBundleOptions options = BuildAssetBundleOptions.DeterministicAssetBundle | 
-                                          BuildAssetBundleOptions.UncompressedAssetBundle;
-        BuildPipeline.BuildAssetBundles(resPath, maps.ToArray(), options, target);
+        BuildPipeline.BuildAssetBundles(resPath, maps.ToArray(), BuildAssetBundleOptions.None, target);
         BuildFileIndex();
 
         string streamDir = Application.dataPath + "/" + AppConst.LuaTempDir;
@@ -105,7 +103,7 @@ public class Packager {
         string streamDir = Application.dataPath + "/" + AppConst.LuaTempDir;
         if (!Directory.Exists(streamDir)) Directory.CreateDirectory(streamDir);
 
-        string[] srcDirs = { WrapFiles.luaDir, WrapFiles.FrameworkPath + "/ToLua/Lua" };
+        string[] srcDirs = { CustomSettings.luaDir, CustomSettings.FrameworkPath + "/ToLua/Lua" };
         for (int i = 0; i < srcDirs.Length; i++) {
             if (AppConst.LuaByteMode) {
                 string sourceDir = srcDirs[i];
@@ -269,7 +267,7 @@ public class Packager {
             File.Copy(srcFile, outFile, true);
             return;
         }
-        bool isWin = true;
+        bool isWin = true; 
         string luaexe = string.Empty;
         string args = string.Empty;
         string exedir = string.Empty;
@@ -277,21 +275,21 @@ public class Packager {
         if (Application.platform == RuntimePlatform.WindowsEditor) {
             isWin = true;
             luaexe = "luajit.exe";
-            args = "-b " + srcFile + " " + outFile;
+            args = "-b -g " + srcFile + " " + outFile;
             exedir = AppDataPath.Replace("assets", "") + "LuaEncoder/luajit/";
         } else if (Application.platform == RuntimePlatform.OSXEditor) {
             isWin = false;
-            luaexe = "./luac";
-            args = "-o " + outFile + " " + srcFile;
-            exedir = AppDataPath.Replace("assets", "") + "LuaEncoder/luavm/";
+            luaexe = "./luajit";
+            args = "-b -g " + srcFile + " " + outFile;
+            exedir = AppDataPath.Replace("assets", "") + "LuaEncoder/luajit_mac/";
         }
         Directory.SetCurrentDirectory(exedir);
         ProcessStartInfo info = new ProcessStartInfo();
         info.FileName = luaexe;
         info.Arguments = args;
         info.WindowStyle = ProcessWindowStyle.Hidden;
-        info.ErrorDialog = true;
         info.UseShellExecute = isWin;
+        info.ErrorDialog = true;
         Util.Log(info.FileName + " " + info.Arguments);
 
         Process pro = Process.Start(info);
@@ -302,7 +300,7 @@ public class Packager {
     [MenuItem("LuaFramework/Build Protobuf-lua-gen File")]
     public static void BuildProtobufFile() {
         if (!AppConst.ExampleMode) {
-            Debugger.LogError("若使用编码Protobuf-lua-gen功能，需要自己配置外部环境！！");
+            UnityEngine.Debug.LogError("若使用编码Protobuf-lua-gen功能，需要自己配置外部环境！！");
             return;
         }
         string dir = AppDataPath + "/Lua/3rd/pblua";

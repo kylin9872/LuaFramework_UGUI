@@ -29,13 +29,13 @@ namespace LuaFramework {
         /// </summary>
         /// <param name="bundle"></param>
         public void AddBundle(string bundleName) {
-            string url = Util.DataPath +bundleName;
+            string url = Util.DataPath + bundleName.ToLower();
             if (File.Exists(url)) {
-                AssetBundle bundle = AssetBundle.CreateFromFile(url);
+                var bytes = File.ReadAllBytes(url);
+                AssetBundle bundle = AssetBundle.CreateFromMemoryImmediate(bytes);
                 if (bundle != null)
                 {
-                    bundleName = bundleName.Replace("Lua/", "");
-                    bundleName = bundleName.Replace(".unity3d", "");
+                    bundleName = bundleName.Replace("lua/", "").Replace(".unity3d", "");
                     base.AddSearchBundle(bundleName.ToLower(), bundle);
                 }
             }
